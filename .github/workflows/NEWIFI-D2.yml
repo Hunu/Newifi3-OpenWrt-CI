@@ -4,10 +4,12 @@
 # Copyright (C) 2019 P3TERX <https://p3terx.com>
 # Copyright (C) 2019 KFERMercer <KFER.Mercer@gmail.com>
 # Copyright (C) 2020 LemoFire <https://www.ito.fun>
+# Copyright (C) 2021 Hunu <https://github.com/Hunu/>
 #
 # <https://github.com/P3TERX/Actions-OpenWrt> 
 # <https://github.com/KFERMercer/OpenWrt-CI>
 # <https://github.com/LemoFire/autoOpenWrt>
+# <https://github.com/Hunu/Newifi3-OpenWrt-CI>
 #
 
 name: NEWIFI-D2
@@ -17,7 +19,7 @@ on:
     branches: 
       - master
   schedule:
-    - cron: 0 */12 * * *
+    - cron: 0 21 * * *
 
 jobs:
   build:
@@ -43,9 +45,11 @@ jobs:
         run: |
           echo "src-git helloworld https://github.com/fw876/helloworld" >> ./feeds.conf.default 
           cd package
+          git clone https://github.com/kenzok8/openwrt-packages.git
           mkdir openwrt-packages
           cd openwrt-packages
           git clone https://github.com/LemoFire/luci-app-aliddns.git
+          git clone https://github.com/tty228/luci-app-serverchan.git
       - name: Update feeds
         run: |
           ./scripts/feeds update -a
@@ -55,41 +59,66 @@ jobs:
           sed -i 's/luci-theme-bootstrap/luci-theme-argon/g' feeds/luci/collections/luci/Makefile
           rm -f ./.config*
           touch ./.config
+          
+          # 编译新3固件
           cat >> .config <<EOF
-          # Device type
           CONFIG_TARGET_ramips=y
           CONFIG_TARGET_ramips_mt7621=y
           CONFIG_TARGET_ramips_mt7621_DEVICE_d-team_newifi-d2=y
+          EOF
 
-          # Gzip
+          # 固件压缩
+          cat >> .config <<EOF
           CONFIG_TARGET_IMAGES_GZIP=y
+          EOF
 
-          # IPv6
-          CONFIG_PACKAGE_dnsmasq_full_dhcpv6=y
-          CONFIG_PACKAGE_ipv6helper=y
+          # 取消IPv6支持
+          cat >> .config <<EOF
+          # CONFIG_PACKAGE_dnsmasq_full_dhcpv6 is not set
+          # CONFIG_PACKAGE_ipv6helper is not set
+          EOF
 
           # USB support
-          ONFIG_PACKAGE_kmod-usb-core=y
+          cat >> .config <<EOF
+          CONFIG_PACKAGE_kmod-usb-core=y
           CONFIG_PACKAGE_kmod-usb3=y
           CONFIG_PACKAGE_kmod-usb-storage=y
           CONFIG_PACKAGE_kmod-usb-storage-extras=y
           CONFIG_PACKAGE_automount=y
+          EOF
           
           # Filesystem
-          CONFIG_PACKAGE_kmod-fs-exfat=y
-          CONFIG_PACKAGE_kmod-fs-ext4=y
+          cat >> .config <<EOF
+          CONFIG_PACKAGE_kmod-fs-nfs=y
+          CONFIG_PACKAGE_kmod-fs-nfs-common=y
+          CONFIG_PACKAGE_kmod-fs-nfs-v3=y
+          CONFIG_PACKAGE_kmod-fs-nfs-v4=y
           CONFIG_PACKAGE_kmod-fs-ntfs=y
+          CONFIG_PACKAGE_kmod-fs-squashfs=y
+          EOF
           
-          # APP
-          CONFIG_PACKAGE_luci-app-aliddns=y
-          CONFIG_PACKAGE_luci-app-aria2=y
-          CONFIG_PACKAGE_luci-app-frpc=y
-          CONFIG_PACKAGE_luci-app-frps=y
-          CONFIG_PACKAGE_luci-app-hd-idle=y
+          # CONFIG_PACKAGE_luci-app-aliddns=y
           # CONFIG_PACKAGE_luci-app-mwan3=y
           # CONFIG_PACKAGE_luci-app-mwan3helper=y
-          CONFIG_PACKAGE_luci-app-openvpn=y
-          CONFIG_PACKAGE_luci-app-openvpn-server=y
+          # CONFIG_PACKAGE_luci-app-frps=y
+          # CONFIG_PACKAGE_luci-app-openvpn=y
+          # CONFIG_PACKAGE_luci-app-openvpn-server=y
+          # CONFIG_PACKAGE_luci-app-syncdial=y
+          # CONFIG_PACKAGE_luci-app-usb-printer=y
+          # 常用LuCI插件选择:
+          cat >> .config <<EOF
+          CONFIG_PACKAGE_luci-app-adbyby-plus=y
+          CONFIG_PACKAGE_luci-app-smartdns=y
+          CONFIG_PACKAGE_luci-app-minidlna=y
+          CONFIG_PACKAGE_luci-app-autoreboot=y
+          CONFIG_PACKAGE_luci-app-unblockmusic=y
+          CONFIG_PACKAGE_luci-app-aria2=y
+          CONFIG_PACKAGE_luci-app-baidupcs-web=y
+          CONFIG_PACKAGE_luci-app-frpc=y
+          CONFIG_PACKAGE_luci-app-ttyd=y
+          CONFIG_PACKAGE_luci-app-watchcat=y
+          CONFIG_PACKAGE_luci-app-serverchan=y
+          CONFIG_PACKAGE_luci-app-hd-idle=y
           CONFIG_PACKAGE_luci-app-samba=y
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Kcptun=y
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Shadowsocks=y
@@ -99,22 +128,34 @@ jobs:
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Trojan=y
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_V2ray=y
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_V2ray_plugin=y
-          # CONFIG_PACKAGE_luci-app-syncdial=y
-          CONFIG_PACKAGE_luci-app-ttyd=y
-          # CONFIG_PACKAGE_luci-app-usb-printer=y
-          CONFIG_PACKAGE_luci-app-xlnetacc=y
+          # CONFIG_PACKAGE_luci-app-ddns is not set
+          # CONFIG_PACKAGE_luci-app-sfe is not set
+          # CONFIG_PACKAGE_luci-app-ipsec-vpn is not set
+          # CONFIG_PACKAGE_luci-app-xlnetacc is not set
+          EOF
+
+          # LuCI主题:
+          cat >> .config <<EOF
+          CONFIG_PACKAGE_luci-theme-argon=y
+          EOF
 
           # Open source WIFI driver
+          cat >> .config <<EOF
           CONFIG_PACKAGE_kmod-mt7603=y
           CONFIG_PACKAGE_kmod-mt7603e=n
           CONFIG_PACKAGE_kmod-mt76x2=y
           CONFIG_PACKAGE_kmod-mt76x2e=n
           CONFIG_PACKAGE_hostapd-common=y
           CONFIG_PACKAGE_wpad-openssl=y
-          CONFIG_PACKAGE_luci-app-mtwifi=n
-          
+          CONFIG_PACKAGE_luci-app-mtwifi=y
           EOF
           
+          # 取消编译VMware镜像以及镜像填充 (不要删除注释符号):
+          cat >> .config <<EOF
+          # CONFIG_TARGET_IMAGES_PAD is not set
+          # CONFIG_VMDK_IMAGES is not set
+          EOF
+
           sed -i 's/^[ \t]*//g' ./.config
           make defconfig
       - name: Download package source code
