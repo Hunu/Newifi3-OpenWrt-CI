@@ -47,8 +47,8 @@ jobs:
           echo "src-git helloworld https://github.com/fw876/helloworld" >> ./feeds.conf.default 
           cd package
           git clone https://github.com/kenzok8/openwrt-packages.git
-          mkdir openwrt-packages
-          cd openwrt-packages
+          mkdir Hunu
+          cd Hunu
           git clone https://github.com/LemoFire/luci-app-aliddns.git
           git clone https://github.com/tty228/luci-app-serverchan.git
       - name: Update feeds
