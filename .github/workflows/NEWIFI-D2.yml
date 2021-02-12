@@ -47,6 +47,7 @@ jobs:
           echo "src-git helloworld https://github.com/fw876/helloworld" >> ./feeds.conf.default 
           cd package
           git clone https://github.com/kenzok8/openwrt-packages.git
+          git clone https://github.com/kenzok8/small.git
           mkdir Hunu
           cd Hunu
           git clone https://github.com/LemoFire/luci-app-aliddns.git
@@ -129,6 +130,7 @@ jobs:
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_Trojan=y
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_V2ray=y
           CONFIG_PACKAGE_luci-app-ssr-plus_INCLUDE_V2ray_plugin=y
+          CONFIG_PACKAGE_luci-app-passwall=y
           # CONFIG_PACKAGE_luci-app-ddns is not set
           # CONFIG_PACKAGE_luci-app-sfe is not set
           # CONFIG_PACKAGE_luci-app-ipsec-vpn is not set
